@@ -2,12 +2,15 @@ import type { BrowserWindow } from "electron";
 import type { DownloadData } from "./DownloadData";
 import { DownloadInitiator } from "./DownloadInitiator";
 import type {
+  ContinueConfig,
   DebugLoggerFn,
   DownloadConfig,
   DownloadManagerConstructorParams,
   IElectronDownloadManager,
 } from "./types";
 import { truncateUrl } from "./utils";
+import path from "node:path";
+import * as fs from "node:fs";
 
 /**
  * This is used to solve an issue where multiple downloads are started at the same time.
@@ -137,6 +140,61 @@ export class ElectronDownloadManager implements IElectronDownloadManager {
           }
         }),
     );
+  }
+
+  /**
+   * restarts in interrupted download. The file at path must exist and is appended to.
+   *
+   * @param params
+   */
+  async continueDownload(params: ContinueConfig) {
+    return this.downloadQueue.add(
+        () =>
+            new Promise<string>((resolve, reject) => {
+      try {
+        const filePath = path.join(params.directory, params.saveAsFilename)
+        if (!fs.existsSync(filePath)) {
+          return reject(Error("Could not find file"));
+        }
+
+        const stats = fs.statSync(filePath)
+        const fileOffset = stats.size
+
+        const downloadInitiator = new DownloadInitiator({
+          debugLogger: this.logger,
+          onCleanup: (data) => {
+            this.cleanup(data);
+          },
+          onDownloadInit: (data) => {
+            this.downloadData[data.id] = data;
+            resolve(data.id);
+          },
+        });
+
+        const downloadOptions = {
+          path: filePath,
+          urlChain: params.urlChain,
+          offset: fileOffset,
+          length: params.length,
+          lastModified: params.lastModified,
+          eTag: params.eTag,
+        }
+
+        const initiateOptions = {
+          callbacks: params.callbacks,
+          directory: params.directory,
+          saveAsFilename: params.saveAsFilename,
+          overwrite: true,
+        }
+
+        this.log(`[${downloadInitiator.getDownloadId()}] continue Download of ${filePath} for ${truncateUrl(params.urlChain[0])}`);
+        const session = params.window.webContents.session
+        session.once("will-download", downloadInitiator.generateOnWillDownload(initiateOptions));
+        session.createInterruptedDownload(downloadOptions)
+      } catch (e) {
+        reject(e);
+      }
+    }))
   }
 
   protected cleanup(data: DownloadData) {

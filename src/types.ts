@@ -121,6 +121,41 @@ export interface DownloadConfig {
   overwrite?: boolean;
 }
 
+export interface ContinueConfig {
+  /**
+   * The Electron.BrowserWindow instance
+   */
+  window: BrowserWindow;
+  /**
+   * The complete URL chain for the download.
+   */
+  urlChain: string[];
+  /**
+   * The callbacks to define to listen for download events
+   */
+  callbacks: DownloadManagerCallbacks;
+  /**
+   * the download directory
+   */
+  directory: string;
+  /**
+   * The relative path to save the file as.
+   */
+  saveAsFilename: string;
+  /**
+   * The total length of the download
+   */
+  length: number;
+  /**
+   * Last-Modified header value.
+   */
+  lastModified?: string;
+  /**
+   * eTag header value
+   */
+  eTag?: string;
+}
+
 export interface IElectronDownloadManager {
   /**
    * Starts a download. If saveDialogOptions has been defined in the config,
@@ -131,6 +166,12 @@ export interface IElectronDownloadManager {
    * This *must* be called with `await` or unintended behavior may occur.
    */
   download(params: DownloadConfig): Promise<string>;
+  /**
+   * restarts in interrupted download. The file at path must exist and is appended to.
+   *
+   * @param params
+   */
+  continueDownload(params: ContinueConfig): Promise<string>;
   /**
    * Cancels a download
    */

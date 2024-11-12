@@ -1,5 +1,5 @@
 import { DownloadData } from "./DownloadData";
-import type { DownloadConfig, IElectronDownloadManager } from "./types";
+import type {ContinueConfig, DownloadConfig, IElectronDownloadManager} from "./types";
 
 /**
  * Mock version of ElectronDownloadManager
@@ -7,6 +7,10 @@ import type { DownloadConfig, IElectronDownloadManager } from "./types";
  */
 export class ElectronDownloadManagerMock implements IElectronDownloadManager {
   async download(_params: DownloadConfig): Promise<string> {
+    return "mock-download-id";
+  }
+
+  async continueDownload(_params: ContinueConfig): Promise<string> {
     return "mock-download-id";
   }
 

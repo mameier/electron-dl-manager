@@ -1,4 +1,5 @@
 import { writeFile } from "node:fs/promises";
+// @ts-ignore
 import path from "node:path";
 import type { DownloadItem } from "electron";
 import {

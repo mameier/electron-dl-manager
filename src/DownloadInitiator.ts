@@ -36,7 +36,7 @@ interface WillOnDownloadParams {
    */
   directory?: string;
   /**
-   * If true, will overwrite the file if it already exists
+   * If true, will overwrite or append the file if it already exists
    * @default false
    */
   overwrite?: boolean;
